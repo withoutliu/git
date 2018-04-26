@@ -1,0 +1,288 @@
+# type 1
+# dos attack
+# tcp SYN_Flood 
+alert tcp any any -> $HOME_NET 502 (msg:"Possible SYN_Flood DoS Attack(150000/client/s)"; \
+flags:S; detection_filter:track by_src, count 150000, seconds 1; \
+sid:1000001; rev:1; gid:1; )
+
+alert tcp any any -> $HOME_NET 502 (msg:"Possible SYN_Flood DoS Attack(100000/client/s)"; \
+flags:S; detection_filter:track by_src, count 100000, seconds 1; \
+sid:1000002; rev:2; gid:2;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Possible SYN_Flood DoS Attack(50000/client/s)"; \
+flags:S; detection_filter:track by_src, count 50000, seconds 1; \
+sid:1000003; rev:3; gid:3;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Possible SYN_Flood DoS Attack(10000/client/s)"; \
+flags:S; detection_filter:track by_src, count 10000, seconds 1; sid:1000004; rev:4; gid:4;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Possible SYN_Flood DoS Attack(1000/client/s)"; \
+flags:S; detection_filter:track by_src, count 1000, seconds 1; sid:1000005; rev:5; gid:5;)
+
+# icmp flood
+alert icmp any any -> $HOME_NET 502 (msg:"Possible ICMP_Flood DoS Attack(150000/client/s)"; \
+detection_filter:track by_src, count 150000, seconds 1; sid:1000006; rev:6; gid:6;)
+
+alert icmp any any -> $HOME_NET 502 (msg:"Possible ICMP_Flood DoS Attack(100000/client/s)"; \
+detection_filter:track by_src, count 100000, seconds 1; sid:1000007; rev:7; gid:7;)
+
+alert icmp any any -> $HOME_NET 502 (msg:"Possible ICMP_Flood DoS Attack(50000/client/s)"; \
+detection_filter:track by_src, count 50000, seconds 1; sid:1000008; rev:8; gid:8;)
+
+alert icmp any any -> $HOME_NET 502 (msg:"Possible ICMP_Flood DoS Attack(10000/client/s)"; \
+detection_filter:track by_src, count 10000, seconds 1; sid:1000009; rev:9; gid:9;)
+
+alert icmp any any -> $HOME_NET 502 (msg:"Possible ICMP_Flood DoS Attack(1000/client/s)"; \
+detection_filter:track by_src, count 1000, seconds 1; sid:1002000; rev:2000; gid:2000;)
+
+# udp flood
+alert udp any any -> $HOME_NET 502 (msg:"Possibe UDP_Flood Dos Attack(150000/client/s)"; \
+detection_filter:track by_src, count 150000, seconds 1; sid:10000210; rev:0210; gid:210;)
+
+alert udp any any -> $HOME_NET 502 (msg:"Possibe UDP_Flood Dos Attack(100000/client/s)"; \ 
+detection_filter:track by_src, count 100000, seconds 1; sid:10000220; rev:220; gid:220;)
+
+alert udp any any -> $HOME_NET 502 (msg:"Possibe UDP_Flood Dos Attack(50000/client/s)"; \ 
+detection_filter:track by_src, count 50000, seconds 1; sid:10000230; rev:0230; gid:230;)
+
+alert udp any any -> $HOME_NET 502 (msg:"Possibe UDP_Flood Dos Attack(10000/client/s)"; \ 
+detection_filter:track by_src, count 10000, seconds 1; sid:10000240; rev:240; gid:240;)
+
+alert udp any any -> $HOME_NET 502 (msg:"Possibe UDP_Flood Dos Attack(1000/client/s)"; \ 
+detection_filter:track by_src, count 1000, seconds 1; sid:10000250; rev:0250; gid:250;)
+
+# type 2 对modbus/tcp协议检测
+
+# func code 1 : 读线圈 read coil
+# transcation id - protocol   - length - unit id -- func code -    start address -   number 
+#(|-----2------|-------2-----|-----2----|----1---|)|------1----|-----------2------|------2----|
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read coil(normal)"; \
+byte_test:1,<=,2,6; content:"|01|"; offset:7; depth:1; byte_test:2,<,100,8; \
+byte_test:2,<=,100,10; dsize:>11; flow:established; sid:1000010; rev:10; gid:10; \
+content:"|00 00|"; offset:2; depth:2; content:"|00 06|"; offset:4; depth:2;) 
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read coil(abnormal: length != 6)"; \
+byte_test:2,!=,6,4; dsize:>11; flow:established; sid:1000011; rev:11; gid:11; \
+content:"|00 00|"; offset:2; depth:2; content:"|01|"; offset:7; depth:1;) 
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read coil(abnormal: unit id > 2)"; \
+byte_test:1,>,2,6; dsize:>11; flow:established; sid:1000012; rev:12; gid:12; \
+content:"|00 00|"; offset:2; depth:2; content:"|01|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read coil(abnormal: start address >= 100)"; \
+byte_test:2,>,99,8; dsize:>11; flow:established; sid:1000013; rev:13; gid:13; \
+content:"|00 00|"; offset:2; depth:2; content:"|01|"; offset:7; depth:1;) 
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read coil(abnorml: number > 100)"; \
+byte_test:2,>,100,10; dsize:>11; flow:established; sid:1000014; rev:14; gid:14; \
+content:"|00 00|"; offset:2; depth:2; content:"|01|"; offset:7; depth:1;) 
+
+
+# func code 2 : 读输入离散量
+# transcation id - protocol   - length - unit id -- func code -    start address -   number 
+#(|-----2------|-------2-----|-----2----|----1---|)|------1----|-----------2------|------2----|
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input discrete(normal)"; \
+byte_test:1,<=,2,6; byte_test:2,<,100,8; byte_test:2,<=,100,10; flow:established; dsize:12;\
+content:"|00 00|"; offset:2; depth:2; content:"|02|"; offset:7; depth:1; content:"|00 06|"; offset:4; depth:2; \
+sid:1000020; rev:20; gid:20;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input discrete(abnormal: length != 6)"; \
+dsize:12; flow:established; content:!"|00 06|"; offset:4; depth:2; sid:1000021; rev:21; gid:21; \ 
+content:"|00 00|"; offset:2; depth:2; content:"|02|"; offset:7; depth:1;) 
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input discrete(abnormal: unit id > 2)"; \
+dsize:12; flow:established; byte_test:1,>,2,6; sid:1000022; rev:22; gid:22; \ 
+content:"|00 00|"; offset:2; depth:2; content:"|02|"; offset:7; depth:1;) 
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input discrete(abnormal: start address >= 100)"; \
+dsize:12; flow:established; byte_test:2,>=,100,8; sid:1000023; rev:23; gid:23; \ 
+content:"|00 00|"; offset:2; depth:2; content:"|02|"; offset:7; depth:1;) 
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input discrete(abnormal: number > 100)"; \
+dsize:12; flow:established; byte_test:2,>,100,10; sid:1000024; rev:24; gid:24; \
+content:"|00 00|"; offset:2; depth:2; content:"|02|"; offset:7; depth:1;) 
+
+# func code 3 : 读多个保持寄存器
+# 与功能码1类似，只是功能码不同
+# transcation id - protocol   - length - unit id -- func code -    start address -   number 
+#(|-----2------|-------2-----|-----2----|----1---|)|------1----|-----------2------|------2----|
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read registers(normal)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|00 06|"; offset:4; depth:2; \
+byte_test:1,<=,2,6; content:"|03|"; offset:7; depth:1; byte_test:2,<,100,8; \
+byte_test:2,<=,100,10; dsize:>11; flow:established; sid:1000030; rev:30; gid:30;) 
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read register(abnormal: length != 6)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|03|"; offset:7; depth:1; \
+byte_test:2,!=,6,4; dsize:>11; flow:established; sid:1000031; rev:31; gid:31;) 
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read register(abnormal: unit id > 2)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|03|"; offset:7; depth:1; \
+byte_test:1,>,2,6; dsize:>11; flow:established; sid:1000032; rev:32; gid:32;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read register(abnormal: start address >= 100)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|03|"; offset:7; depth:1; \
+byte_test:2,>,99,8; dsize:>11; flow:established; sid:1000033; rev:33; gid:33;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read register(abnorml: number > 100)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|03|"; offset:7; depth:1; \
+byte_test:2,>,100,10; dsize:>11; flow:established; sid:1000034; rev:34; gid:34;)
+
+# func code 4 : 读输入寄存器
+# transcation id - protocol   - length - unit id -- func code -    start address -   number 
+#(|-----2------|-------2-----|-----2----|----1---|)|------1----|-----------2------|------2----|
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input register(normal)"; \
+dsize:12; flow:established; sid:1000040; rev:40; gid:40; \
+content:"|00 00|"; offset:2; depth:2; content:"|00 06|"; offset:4; depth:2; byte_test:1,<=,2,6; \
+content:"|04|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input register(abnormal: length != 6)"; \
+dsize:12; flow:established; content:!"|00 06|"; offset:4; depth:2; sid:1000041; rev:41; gid:41; \
+content:"|00 00|"; offset:2; depth:2; content:"|04|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input register(abnormal: unit id > 2)"; \
+dsize:12; flow:established; byte_test:1,>,2,6; sid:1000042; rev:42; gid:42; \
+content:"|00 00|"; offset:2; depth:2; content:"|04|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input register(abnormal: start address >= 100)"; \
+dsize:12; flow:established; byte_test:2,>,100,8; sid:1000043; rev:43; gid:43; \
+content:"|00 00|"; offset:2; depth:2; content:"|04|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read input register(abnormal: number > 100)"; \
+dsize:12; flow:established; byte_test:2,>,100,10; sid:1000044; rev:44; gid:44; \
+content:"|00 00|"; offset:2; depth:2; content:"|04|"; offset:7; depth:1;)
+
+# func code 5 : 写单个线圈
+# transition id - protocol id - length - unit id - func code - start address - data
+# ------2------|-------2------|----2---|----1----|-----1-----|---------2-----|----2---|
+# data = 0x00ff value = 1;  data = 0x0000 value = 0.
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write single coil(normal value 1)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|00 06|"; offset:4; depth:2; \
+byte_test:1,<=,2,6; content:"|05|"; offset:7; depth:1; byte_test:2,<,100,8; \
+content:"|ff 00|"; offset:10; depth:2; dsize:>11; flow:established; sid:1000050; rev:50; gid:50;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write single coil(normal value 0)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|00 06|"; offset:4; depth:2; \
+byte_test:1,<=,2,6; content:"|05|"; offset:7; depth:1; byte_test:2,<,100,8; \
+content:"|00 00|"; offset:10; depth:2; dsize:>11; flow:established; sid:1000051; rev:51; gid:51;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write single coil(abnormal: length != 6 )"; \
+content:"|00 00|"; offset:2; depth:2; content:"|05|"; offset:7; depth:1; \
+byte_test:2,!=,6,4; dsize:>11; flow:established; sid:10000052; rev:52; gid:52;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write single coil(abnormal: unit id > 2)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|05|"; offset:7; depth:1; \
+byte_test:1,>,2,6; dsize:>11; flow:established; sid:1000053; rev:53; gid:53;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write single coil(abnormal: start address >= 100)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|05|"; offset:7; depth:1; \
+byte_test:2,>,99,8; dsize:>11; flow:established; sid:1000054; rev:54; gid:54;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write single coil(abnormal: value != 0/1)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|05|"; offset:7; depth:1; \
+content:!"|ff 00|"; offset:10; depth:2; content:!"|00 00|"; offset:10; depth:2; \
+dsize:>11; flow:established; sid:1000055; rev:55; gid:55;)
+
+# func code 6 : 写单个寄存器
+# transcation id - protocol id - length - unit id - func code - start address - value
+# -------2-------|-----2-------|----2----|---1---|------1-----|-------2------|--2----
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write single register(normal)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|00 06|"; offset:4; depth:2; \
+byte_test:1,<=,2,6; content:"|06|"; offset:7; depth:1; byte_test:2,<,100,8; byte_test:2,<,10,10; \
+dsize:>11; flow:established; sid:1000060; rev:60; gid:60;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write signle register(abnormal: length != 6)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|06|"; offset:7; depth:1; \
+byte_test:2,!=,6,4; dsize:>11; flow:established; sid:1000061; rev:61; gid:61;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write signle register(abnormal: unit id > 2)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|06|"; offset:7; depth:1; \
+byte_test:1,>,2,6; dsize:>11; flow:established; sid:1000062; rev:62; gid:62;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write signle register(abnormal: address >= 100)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|06|"; offset:7; depth:1; \
+byte_test:2,>,99,8; dsize:>11; flow:established; sid:1000063; rev:63; gid:63;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write signle register(abnormal: value >= 10)"; \
+content:"|00 00|"; offset:2; depth:2; content:"|06|"; offset:7; depth:1; \
+byte_test:2,>=,10,10; dsize:>11; flow:established; sid:1000064; rev:64; gid:64;)
+
+# func code 15 : 写多个线圈
+# transcation id - protocol id - length - unit id - func code - start address-output number - bytes - value
+# ------2-------|------2-------|----2----|---1----|----1------|-------2------|-------2------|----1---|---N*--- 
+# number: 输出数量/8,如果余数不为0,则加1; 如果对100个线圈赋值，100 / 8 + 1 = 13 
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write serial coils"; \
+dsize:>13; flow:established; content:"|00 00|"; offset:2; depth:2; content:"|0F|"; offset:7; depth:1; \
+sid:1000150; rev:150; gid:150;)
+
+# func code 16 : 写多个寄存器
+# transcation id - protocol id - length - unit id - func code - start address-output number - bytes - value
+# ------2-------|------2-------|----2----|---1----|----1------|-------2------|-------2------|----1---|---2xN*--- 
+# 同功能码15(0x0F)
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write serial registers"; \
+dsize:>13; flow:established; content:"|00 00|"; offset:2; depth:2; content:"|10|"; offset:7; depth:1; \
+sid:1000160; rev:160; gid:160;)
+
+# func code 20 : 读文件记录
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read file record"; \
+flow:established; sid:1000200; rev:200; gid:200; \
+content:"|00 00|"; offset:2; depth:2; content:"|14|"; offset:7; depth:1;)
+
+# func code 21 : 写文件记录
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/write file record"; \
+flow:established; sid:1000210; rev:210; gid:210; \
+content:"|00 00|"; offset:2; depth:2; content:"|15|"; offset:7; depth:1;)
+
+# func code 22 : 屏蔽写寄存器
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/mask write register"; \
+dsize:14; byte_test:1,<,3,6; flow:established; sid:1000220; rev:220; gid:220; \
+content:"|00 00|"; offset:2; depth:2; content:"|16|"; offset:7; depth:1;)
+
+# func code 23 : 读/写多个寄存器
+# transcation id - protocol id - length - unit id - func code - read start address-read number-write start address - 
+# ------2-------|------2-------|----2----|---1----|----1------|-------2-----------|-------2---|----2--------------| 
+# write number - write bytes number - write value
+# -----2-------|-------1----------|-------2xN*---|
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read/write serial registers(possible normal)"; \
+dsize:>16; byte_test:2,>,9,4; byte_test:1,<,3,6; flow:established; sid:1000230; rev:230; gid:230; \
+content:"|00 00|"; offset:2; depth:2; content:"|17|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read/write serial registers(abnormal: length < 17)"; \
+dsize:<17; flow:established; sid:1000231; rev:231; gid:231; \
+content:"|00 00|"; offset:2; depth:2; content:"|17|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read/write serial registers(abnormal: unit id > 2)"; \
+dsize:>16; byte_test:1,>,2,6; flow:established; sid:1000232; rev:232; gid:232; \
+content:"|00 00|"; offset:2; depth:2; content:"|17|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read/write serial registers(abnormal: read start address >= 100)"; \
+dsize:>16; byte_test:2,>=,100,8; flow:established; sid:1000233; rev:233; gid:233; \
+content:"|00 00|"; offset:2; depth:2; content:"|17|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read/write serial registers(abnormal: read number > 100)"; \
+dsize:>16; byte_test:2,>,100,10; flow:established; sid:1000234; rev:234; gid:234; \
+content:"|00 00|"; offset:2; depth:2; content:"|17|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read/write serial registers(abnormal: write start address >= 100)"; \
+dsize:>16; flow:established; byte_test:2,>=,100,12; sid:1000235; rev:235; gid:235; \
+content:"|00 00|"; offset:2; depth:2; content:"|17|"; offset:7; depth:1;)
+
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read/write serial registers(abnormal: write number > 100)"; \
+dsize:>16; flow:established; byte_test:2,>,100,14; sid:1000236; rev:236; gid:236; \
+content:"|00 00|"; offset:2; depth:2; content:"|17|"; offset:7; depth:1;)
+
+# func code 43 : 读设备识别码
+# transcation id - protocol id - length - unit id - func code - MEI type - ReadDevId - object id
+#       2                2          2         1         1          1          1           1
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/read ID of device"; \
+dsize:11; flow:established; sid:1000650; rev:650; gid:650; \
+content:"|00 00|"; offset:2; depth:2; content:"|00 05|"; offset:4; depth:2; byte_test:1,<,3,6; \
+content:"|2B|"; offset:7; depth:1;)
+
+# 异常功能码 0
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/ except func_code : 0"; \
+flow:established; content:"|00 00|"; offset:2; depth:2; content:"|00|"; offset:7; depth:1; \
+sid:1000680; rev:680; gid:680;)
+
+# 数据包载荷大于512
+alert tcp any any -> $HOME_NET 502 (msg:"Modbus TCP/ data size than 512"; \
+content:"|00 00|"; offset:2; depth:2; dsize:>512; sid:1000512; rev:512; gid:512;)
